@@ -9,6 +9,8 @@ import view.Main;
 import model.MainModel;
 import java.awt.event.ActionEvent;
 import connection.ConnectionDB;
+import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -32,6 +34,21 @@ public class MainController implements ActionListener {
     }
     
     public void actionPerformed(ActionEvent e){
-        view.labelStatusConnection.setText(this.conexion.statusConnection());
+        String consulta = "SELECT * FROM users";
+        List<Map<String, Object>> resultados = this.conexion.selectQuery(consulta);
+
+        for (Map<String, Object> fila : resultados) {
+            Object nombre = fila.get("name");
+            System.out.println("nombre: " + nombre);
+//            for (Map.Entry<String, Object> entry : fila.entrySet()) {
+//                String columnaNombre = entry.getKey();
+//                Object valorColumna = entry.getValue();
+//                System.out.println(columnaNombre + ": " + valorColumna);
+//            }
+            System.out.println();
+            System.out.println("************************************************************************************");
+            System.out.println();
+        }
+        view.labelStatusConnection.setText("consulta ejecutada correctamente...");
     }
 }

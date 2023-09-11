@@ -8,6 +8,13 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import connection.CredentialDB;
+import java.sql.Statement;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -17,28 +24,79 @@ public class ConnectionDB {
     private String url;
     private String user;
     private String password;
+    private Connection conexion;
     
     public ConnectionDB(){
-        try{
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            System.out.println("Controlador cargado correctamente");
-        } catch(ClassNotFoundException e){
-            System.out.println("Error al cargar el controlador");
-        }
         CredentialDB credenciales = new CredentialDB();
         this.url = credenciales.getUrl();
         this.user = credenciales.getUser();
         this.password = credenciales.getPassword();
     }
     
-    public String statusConnection(){
-        try{
-            Connection conexion = DriverManager.getConnection(url, user, password);
-            
-            conexion.close();
-            return "Conexion establecida correctamente...";
-        } catch(SQLException e){
-            return "Error al conectar la base de datos: " + e.getMessage();
+    public Connection openConnection(){
+        try {
+            if (conexion == null || conexion.isClosed()) {
+                // Si la conexión es nula o está cerrada, la abrimos nuevamente
+                Class.forName("com.mysql.cj.jdbc.Driver");
+                conexion = DriverManager.getConnection(url, user, password);
+                System.out.println("Conexión exitosa a la base de datos");
+            }
+            return conexion;
+        } catch (ClassNotFoundException | SQLException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Error al conectar a la base de datos");
+        }
+    }
+    
+    public void closeConnection(){
+        if(conexion != null){
+            try{
+                conexion.close();
+                System.out.println("Conexion cerrada");
+            } catch(SQLException e){
+                e.printStackTrace();
+            }
+        }
+    }
+    
+    public List<Map<String, Object>> selectQuery(String consulta){
+        List<Map<String, Object>> resultados = new ArrayList<>();
+
+        try {
+            this.openConnection();
+            Statement statement = this.conexion.createStatement();
+            ResultSet result = statement.executeQuery(consulta);
+
+            ResultSetMetaData metaData = result.getMetaData();
+            int columnCount = metaData.getColumnCount();
+
+            while (result.next()) {
+                Map<String, Object> fila = new HashMap<>();
+                for (int i = 1; i <= columnCount; i++) {
+                    String columnaNombre = metaData.getColumnName(i);
+                    Object valorColumna = result.getObject(i);
+                    fila.put(columnaNombre, valorColumna);
+                }
+                resultados.add(fila);
+            }
+            this.closeConnection();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return resultados;
+    }
+    
+    public void insertQuery(String consulta) {
+        try {
+            this.openConnection();
+            Statement statement = this.conexion.createStatement();
+            statement.executeUpdate(consulta);
+            this.closeConnection();
+            System.out.println("Datos insertados correctamente.");
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.err.println("Error al insertar datos: " + e.getMessage());
         }
     }
 }

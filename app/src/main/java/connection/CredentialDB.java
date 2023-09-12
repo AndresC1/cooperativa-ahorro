@@ -9,7 +9,7 @@ package connection;
  * @author andre
  */
 public class CredentialDB {
-    private String url = "jdbc:mysql://localhost:3306/test";
+    private String url = "jdbc:mysql://localhost:3306/cooperativa_ahorro";
     private String user = "root";
     private String password = "";
 
